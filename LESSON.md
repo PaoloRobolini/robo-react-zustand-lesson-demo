@@ -111,3 +111,36 @@ updateResource: async (id, delta) => {
 }
 ```
 In questo modo l'app sembrerà istantanea ("snappy") anche se la connessione è lenta!
+
+---
+
+## Step 5 (Bonus): Realtime con PocketBase (Simulato)
+
+Le moderne app spaziali devono essere aggiornate in tempo reale! Se un altro membro dell'equipaggio usa ossigeno, io devo vederlo subito.
+
+### Cosa abbiamo fatto:
+1.  In `src/store.js`, abbiamo aggiunto l'azione `subscribeToUpdates`.
+    - Si connette all'API con `api.subscribe()`.
+    - Quando riceve un update, usa `set()` per aggiornare la singola risorsa modificata.
+2.  In `App.jsx`, chiamiamo `subscribeToUpdates()` dentro `useEffect`.
+
+### Codice Chiave
+```javascript
+// In store.js
+subscribeToUpdates: () => {
+    return api.subscribe((id, payload) => {
+        set(state => ({
+            resources: state.resources.map(r => r.id === id ? payload : r)
+        }))
+    });
+}
+
+// In App.jsx
+useEffect(() => {
+    fetchResources();
+    const unsubscribe = subscribeToUpdates();
+    return () => unsubscribe(); // Pulizia quando chiudo l'app
+}, []);
+```
+
+Ora, se aprite l'app in due tab diverse (o se l'API simulasse modifiche esterne), vedreste i dati cambiare da soli!

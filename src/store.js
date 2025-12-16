@@ -49,11 +49,28 @@ export const useStore = create((set, get) => ({
         try {
             const updatedItem = newResources.find(r => r.id === id);
             await api.updateResource(id, updatedItem.quantity);
-            // Opzionale: se l'API restituisce il dato aggiornato/normalizzato, potremmo fare un set finale
         } catch (err) {
             // 5. ROLLBACK in caso di errore
             console.error("Update failed, rolling back", err);
             set({ resources: previousResources, error: "Errore salvataggio: " + err.message });
         }
     },
+
+    // BONUS: Realtime Subscriptions
+    subscribeToUpdates: () => {
+        // Chiama la funzione subscribe dell'API
+        // Quando arriva un aggiornamento (callback), aggiorniamo lo Store
+        const unsubscribe = api.subscribe((id, updatedResource) => {
+            console.log(`[Realtime] Received update for ${updatedResource.name}`);
+
+            set((state) => ({
+                resources: state.resources.map((res) =>
+                    res.id === id ? updatedResource : res
+                )
+            }));
+        });
+
+        // Ritorniamo la funzione di pulizia (per quando il componente si smonta)
+        return unsubscribe;
+    }
 }));
