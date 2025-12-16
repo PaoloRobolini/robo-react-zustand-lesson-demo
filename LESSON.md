@@ -32,3 +32,32 @@ In un'applicazione reale, il frontend parla con un backend (API). Per concentrar
 ### Concetti Chiave:
 - **Asincronicità**: Le chiamate al server non sono immediate. La nostra UI dovrà mostrare uno stato di "loading".
 - **Separation of Concerns**: L'API gestisce i dati grezzi, la UI gestisce la visualizzazione, e lo Store (che faremo dopo) farà da ponte.
+
+---
+
+## Step 2: Lo Store (Il Cervello dell'App)
+
+Ora creiamo il cuore dell'applicazione: lo Store Zustand.
+In Zustand, lo store è un hook personalizzato (di solito chiamato `useStore`).
+
+### Cosa abbiamo fatto:
+1.  Creato `src/store.js`.
+2.  Definito lo stato iniziale: `resources` (array vuoto), `isLoading` (boolean), `error` (null o string).
+3.  Creata l'azione `fetchResources`:
+    - Imposta `isLoading: true`.
+    - Chiama `api.fetchResources()`.
+    - Se ha successo, mette i dati nello stato e spegne il loading.
+    - Se fallisce, salva l'errore.
+
+### Codice Chiave
+```javascript
+export const useStore = create((set) => ({
+  resources: [],
+  fetchResources: async () => {
+    set({ isLoading: true });
+    const data = await api.fetchResources();
+    set({ resources: data, isLoading: false });
+  }
+}));
+```
+Notate come `set` unisce automaticamente il nuovo stato con quello vecchio (shallow merge). Non serve fare `set(state => ({ ...state, isLoading: true }))`!
