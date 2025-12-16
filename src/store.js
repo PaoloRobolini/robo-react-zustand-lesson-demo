@@ -26,6 +26,34 @@ export const useStore = create((set, get) => ({
         }
     },
 
-    // Per ora ci fermiamo qui (Step 2).
-    // Nel prossimo step aggiungeremo le azioni per aggiornare i dati.
+    // 2. Aggiornamento Risorsa (Optimistic Update)
+    updateResource: async (id, delta) => {
+        // 1. Salva lo stato precedente (per eventuale rollback)
+        const previousResources = get().resources;
+
+        // 2. Calcola il nuovo stato
+        const newResources = previousResources.map((res) => {
+            if (res.id === id) {
+                let newQty = res.quantity + delta;
+                if (newQty < 0) newQty = 0;
+                if (newQty > 100 && res.unit === '%') newQty = 100;
+                return { ...res, quantity: newQty };
+            }
+            return res;
+        });
+
+        // 3. AGGIORNA SUBITO LA UI (Optimistic)
+        set({ resources: newResources, error: null });
+
+        // 4. Chiama l'API
+        try {
+            const updatedItem = newResources.find(r => r.id === id);
+            await api.updateResource(id, updatedItem.quantity);
+            // Opzionale: se l'API restituisce il dato aggiornato/normalizzato, potremmo fare un set finale
+        } catch (err) {
+            // 5. ROLLBACK in caso di errore
+            console.error("Update failed, rolling back", err);
+            set({ resources: previousResources, error: "Errore salvataggio: " + err.message });
+        }
+    },
 }));

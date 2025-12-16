@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ResourceCard = ({ resource }) => {
+const ResourceCard = ({ resource, onUpdate }) => {
     const getColor = (quantity) => {
         if (quantity < 30) return 'red';
         if (quantity < 60) return 'orange';
@@ -38,8 +38,14 @@ const ResourceCard = ({ resource }) => {
                     transition: 'width 0.5s ease'
                 }} />
             </div>
+
+            <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
+                <button onClick={() => onUpdate(-10)}>-10</button>
+                <button onClick={() => onUpdate(+10)}>+10</button>
+            </div>
         </div>
     );
 };
 
 export default ResourceCard;
+

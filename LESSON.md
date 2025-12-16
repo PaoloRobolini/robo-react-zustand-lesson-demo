@@ -16,6 +16,7 @@ Ogni step di questa lezione corrisponde a un commit nel repository.
 2.  **Step 2**: Configurazione dello Store Zustand.
 3.  **Step 3**: Creazione della UI e lettura dati.
 4.  **Step 4**: Aggiornamento dati (Optimistic Updates).
+5.  **Bonus**: Realtime Updates.
 
 ---
 
@@ -79,3 +80,34 @@ Ora che abbiamo lo store, facciamo sì che i componenti React lo usino.
 ### Concetti Chiave:
 - **Selectors**: Quando usiamo `useStore`, passiamo una funzione "selettore" (es. `state => state.resources`). Questo è FONDAMENTALE per le performance: il componente si re-renderizzerà SOLO se quella specifica parte di stato cambia.
 - **Nessun Prop Drilling**: Non abbiamo passato `resources` da App -> Dashboard -> Card. Dashboard se li prende direttamente dallo store!
+
+---
+
+## Step 4: Interattività e Optimistic Updates
+
+Vogliamo modificare i valori (es. consumare ossigeno o fare rifornimento).
+Il problema: L'API è lenta (ci mette ~0.5 secondi).
+La soluzione: **Optimistic UI**. Aggiorniamo subito l'interfaccia come se fosse andato tutto bene, poi chiamiamo il server. Se (e solo se) il server fallisce, facciamo "Rollback".
+
+### Cosa abbiamo fatto:
+1.  Aggiornato `src/store.js` aggiungendo `updateResource`.
+    - Logica: `set()` immediato -> chiamata API -> `catch` con Rollback.
+2.  Aggiornato `Dashboard` e `ResourceCard` per aggiungere pulsanti (+/- 10).
+
+### Codice Chiave
+```javascript
+updateResource: async (id, delta) => {
+  const oldState = get().resources; // Salviamo per backup
+  
+  // Modifica ottimistica
+  const newState = oldState.map(...) 
+  set({ resources: newState });
+
+  try {
+    await api.updateResource(id, ...); // Chiamata lenta
+  } catch (err) {
+    set({ resources: oldState, error: "Ops!" }); // Rollback
+  }
+}
+```
+In questo modo l'app sembrerà istantanea ("snappy") anche se la connessione è lenta!
