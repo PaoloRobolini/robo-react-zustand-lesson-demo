@@ -61,3 +61,21 @@ export const useStore = create((set) => ({
 }));
 ```
 Notate come `set` unisce automaticamente il nuovo stato con quello vecchio (shallow merge). Non serve fare `set(state => ({ ...state, isLoading: true }))`!
+
+---
+
+## Step 3: Connettere la UI (Leggere i dati)
+
+Ora che abbiamo lo store, facciamo sì che i componenti React lo usino.
+
+### Cosa abbiamo fatto:
+1.  Creato `src/components/ResourceCard.jsx`: Componente "stupido" (presentational) che riceve i dati via props e li mostra.
+2.  Creato `src/components/Dashboard.jsx`: Componente "intelligente" che si connette allo store.
+    - Usa `useStore(state => state.resources)` per leggere i dati.
+3.  Aggiornato `App.jsx`:
+    - Usa `useEffect` per lanciare `fetchResources()` solo al primo render (bootstrapping).
+    - Renderizza la Dashboard.
+
+### Concetti Chiave:
+- **Selectors**: Quando usiamo `useStore`, passiamo una funzione "selettore" (es. `state => state.resources`). Questo è FONDAMENTALE per le performance: il componente si re-renderizzerà SOLO se quella specifica parte di stato cambia.
+- **Nessun Prop Drilling**: Non abbiamo passato `resources` da App -> Dashboard -> Card. Dashboard se li prende direttamente dallo store!
