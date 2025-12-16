@@ -1,51 +1,72 @@
+import PocketBase from 'pocketbase';
+
 /**
- * MOCK API
- * Simula il comportamento di un server remoto (es. PocketBase) con latenza artificiale.
+ * POCKETBASE API
+ * Connette l'applicazione a un'istanza locale di PocketBase.
+ * URL Default: http://127.0.0.1:8090
+ * 
+ * Requisiti Collection 'resources' in PocketBase:
+ * - name (text)
+ * - quantity (number)
+ * - unit (text)
+ * - type (select/text: 'gas', 'liquid', 'solid')
  */
 
-const INITIAL_DATA = [
-  { id: 1, name: 'Oxygen', quantity: 95, type: 'gaz', unit: '%' },
-  { id: 2, name: 'Fuel', quantity: 80, type: 'liquid', unit: '%' },
-  { id: 3, name: 'Food', quantity: 45, type: 'solid', unit: 'kg' },
-];
+const pb = new PocketBase('http://127.0.0.1:8090');
 
-let resources = [...INITIAL_DATA];
-let listeners = [];
-
-// Latency simulator (wait for 500ms - 1500ms)
-const wait = (min = 500, max = 1500) =>
-  new Promise((resolve) =>
-    setTimeout(resolve, min + Math.random() * (max - min))
-  );
+// Disabilita auto-cancellation per evitare abort error in React strict mode
+pb.autoCancellation(false);
 
 export const api = {
   // [READ] Leggi tutte le risorse
   fetchResources: async () => {
-    await wait();
-    // A volte simula un errore casuale (opzionale, per ora disabilitato)
-    // if (Math.random() > 0.9) throw new Error("Connection lost");
-    return [...resources];
+    // Richiede la lista ordinata per nome
+    const records = await pb.collection('resources').getList(1, 50, {
+      sort: 'name',
+    });
+    return records.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      type: item.type
+    }));
   },
 
   // [UPDATE] Aggiorna una risorsa specifica
   updateResource: async (id, newQuantity) => {
-    await wait(300, 800);
-    const index = resources.findIndex((r) => r.id === id);
-    if (index === -1) throw new Error('Resource not found');
-    
-    resources[index] = { ...resources[index], quantity: newQuantity };
-    
-    // Notifica i listeners (per il bonus Realtime)
-    listeners.forEach((l) => l(id, resources[index]));
-    
-    return resources[index];
+    const record = await pb.collection('resources').update(id, {
+      quantity: newQuantity
+    });
+    return {
+      id: record.id,
+      name: record.name,
+      quantity: record.quantity,
+      unit: record.unit,
+      type: record.type
+    };
   },
 
-  // [BONUS] Realtime subscription dummy implementation
+  // [REALTIME] Sottoscrizione agli aggiornamenti
   subscribe: (callback) => {
-    listeners.push(callback);
+    // Sottoscriviti a tutti i cambiamenti nella collection 'resources'
+    pb.collection('resources').subscribe('*', (e) => {
+      if (e.action === 'update') {
+        const updatedResource = {
+          id: e.record.id,
+          name: e.record.name,
+          quantity: e.record.quantity,
+          unit: e.record.unit,
+          type: e.record.type
+        };
+        // Chiama la callback fornita dallo store
+        callback(updatedResource.id, updatedResource);
+      }
+    });
+
+    // Ritorna una funzione di cleanup
     return () => {
-      listeners = listeners.filter((l) => l !== callback);
+      pb.collection('resources').unsubscribe('*');
     };
   },
 };

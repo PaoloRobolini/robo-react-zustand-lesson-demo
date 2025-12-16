@@ -144,3 +144,22 @@ useEffect(() => {
 ```
 
 Ora, se aprite l'app in due tab diverse (o se l'API simulasse modifiche esterne), vedreste i dati cambiare da soli!
+
+---
+
+## Step 6: Backend Reale (PocketBase Integration)
+
+Ora facciamo sul serio. Sostituiamo la Mock API con un vero database backend: **PocketBase**.
+
+### Cosa serve:
+1.  Scarica ed esegui [PocketBase](https://pocketbase.io).
+2.  Crea una collection chiamata `resources` (Public API rules: unlock read/write per test).
+3.  Aggiungi campi: `name` (text), `quantity` (number), `unit` (text).
+
+### Cosa abbiamo fatto:
+1.  Installato l'SDK: `npm install pocketbase`.
+2.  Aggiornato `src/api.js` per connettersi a `http://127.0.0.1:8090`.
+3.  Sostituito i metodi finti con `pb.collection('resources').getList(...)` e `.update(...)`.
+4.  La sottoscrizione Realtime ora usa `pb.collection(...).subscribe('*')`.
+
+Ora, se aprite PocketBase Admin UI e cambiate un valore manualmente, vedrete la Dashboard React aggiornarsi istantaneamente grazie alla vera connessione WebSocket! 🤯
