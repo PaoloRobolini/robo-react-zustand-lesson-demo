@@ -69,4 +69,11 @@ export const api = {
       pb.collection('resources').unsubscribe('*');
     };
   },
+
+  create: async (res) => {
+    // console.log(`aggiungo ${JSON.stringify(res)} a pocketbase...`)
+    const record = await pb.collection('resources').create(res);
+    console.log(`Risulta che il record sia ${JSON.stringify(record)}`)
+    return record
+  }
 };

@@ -56,6 +56,21 @@ export const useStore = create((set, get) => ({
         }
     },
 
+    // 3. AGGIUNGI UNA RISORSA
+    addResource: async (resource) => {
+        // console.log(`Ho ricevuto la risorsa ${JSON.stringify(resource)}`)
+        console.log("arriva alla creazione")
+        set({ isLoading: true, error: null });
+        try {
+            const response = await api.create(resource)
+            console.log(`Lo store ha correttamente aggiunto ${JSON.stringify(resource)}`)
+            set({ resources: [response, ...get().resources], isLoading: false });
+        } catch (e) {
+            set({isLoading: false, error: e})
+            console.log(`Errore nella creazione: ${e}`)
+        }
+    },
+
     // BONUS: Realtime Subscriptions
     subscribeToUpdates: () => {
         // Chiama la funzione subscribe dell'API
